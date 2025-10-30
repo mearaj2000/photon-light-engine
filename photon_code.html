@@ -1,0 +1,3422 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content-width=device-width, initial-scale=1.0">
+    <title>Photon - خطوة 4: الفتحات والخصائص المتقدمة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1419;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: #1a1a2e;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 2px solid #333;
+            align-items: center;
+        }
+
+        .tool-btn {
+            padding: 10px 20px;
+            background: #3a4a6a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tool-btn:hover {
+            background: #4a5a7a;
+            transform: translateY(-2px);
+        }
+
+        .tool-btn.active {
+            background: #667eea;
+        }
+
+        .tool-btn.preview-mode {
+            background: #f39c12;
+        }
+
+        .tool-btn.preview-mode:hover {
+            background: #f1c40f;
+        }
+
+        .toolbar-separator {
+            width: 2px;
+            height: 30px;
+            background: #444;
+            margin: 0 5px;
+        }
+
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #game-canvas {
+            border: 3px solid #333;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            cursor: crosshair;
+        }
+
+        #game-canvas.preview-mode {
+            cursor: pointer;
+        }
+        
+        .cursor-grab {
+            cursor: grab !important;
+        }
+        
+        .cursor-grabbing {
+            cursor: grabbing !important;
+        }
+        
+        .cursor-rotate {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>') 12 12, pointer !important;
+        }
+
+        .properties-panel {
+            width: 360px;
+            background: #2a2a3e;
+            border-left: 3px solid #444;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .properties-header {
+            background: #3a4a6a;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 2px solid #444;
+        }
+
+        .properties-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .property-row {
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .property-label {
+            flex: 1;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .property-value {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .property-value input[type="number"],
+        .property-value input[type="text"],
+        .property-value select {
+            width: 100%;
+            padding: 6px;
+            background: #1a1a2e;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .property-value select {
+            cursor: pointer;
+        }
+
+        .property-value input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .property-value input[type="color"] {
+            width: 60px;
+            height: 32px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .property-section {
+            background: #1e2636;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .property-section h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #1a2332;
+            padding: 12px;
+            margin: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .info-box h3 {
+            margin: 0 0 8px 0;
+            color: #667eea;
+            font-size: 13px;
+        }
+
+        .info-box p {
+            margin: 4px 0;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .mode-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mode-badge.edit {
+            background: #3498db;
+            color: white;
+        }
+
+        .mode-badge.preview {
+            background: #f39c12;
+            color: white;
+        }
+
+        .openings-list {
+            margin-top: 10px;
+        }
+
+        .opening-item {
+            background: #2a3447;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .opening-item button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .opening-item button:hover {
+            background: #c0392b;
+        }
+
+        .btn-add-opening {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-add-opening:hover {
+            background: #229954;
+        }
+
+        .light-preset-colors {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .preset-color {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .preset-color:hover {
+            transform: scale(1.1);
+        }
+
+        .preset-color.active {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Photon - خطوة 4: الفتحات والخصائص المتقدمة</h1>
+        </div>
+
+        <div class="toolbar">
+            <button class="tool-btn active" id="btn-select">👆 اختيار</button>
+            <button class="tool-btn" id="btn-add-bulb">💡 مصباح</button>
+            <button class="tool-btn" id="btn-add-wall">🧱 جدار</button>
+            <button class="tool-btn" id="btn-add-mirror">🪞 مرآة</button>
+            
+            <div class="toolbar-separator"></div>
+            
+            <button class="tool-btn preview-mode" id="btn-preview">👁️ معاينة</button>
+            <button class="tool-btn" id="btn-edit" style="display:none">✏️ تحرير</button>
+            
+            <div style="flex: 1"></div>
+            
+            <div class="mode-badge edit" id="mode-badge">
+                وضع التحرير
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-area">
+                <canvas id="game-canvas" width="1000" height="700"></canvas>
+            </div>
+
+            <div class="properties-panel">
+                <div class="properties-header" id="properties-header">
+                    الخصائص
+                </div>
+                <div class="properties-content" id="properties-content">
+                    <div class="info-box">
+                        <h3>🎮 الأدوات</h3>
+                        <p>• <strong>💡 مصباح:</strong> ضوء 360 درجة مع ألوان</p>
+                        <p>• <strong>🧱 جدار:</strong> يحجب الضوء + فتحات</p>
+                        <p>• <strong>نقر مزدوج:</strong> تشغيل/إطفاء</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // LIGHT PRESETS
+        // ============================================
+        const LIGHT_PRESETS = {
+            warm: { color: '#FFD700', name: 'دافئ' },
+            white: { color: '#FFFFFF', name: 'أبيض' },
+            cool: { color: '#B0E0E6', name: 'بارد' },
+            red: { color: '#FF4444', name: 'أحمر' },
+            green: { color: '#44FF44', name: 'أخضر' },
+            blue: { color: '#4444FF', name: 'أزرق' },
+            purple: { color: '#AA44FF', name: 'بنفسجي' },
+            orange: { color: '#FF8844', name: 'برتقالي' },
+            custom: { color: '#FFFF00', name: 'مخصص' }
+        };
+
+        // ============================================
+        // 365 DEGREE LIGHT CLASS
+        // ============================================
+        class Light365 {
+            constructor(bulb) {
+                this.bulb = bulb;
+                this.currentRadius = 0;
+                this.targetRadius = 2000;
+                this.isAnimating = false;
+                this.isFadingOut = false;
+                this.opacity = 1.0; // For fade out effect
+            }
+
+            startAnimation() {
+                this.currentRadius = 0;
+                this.isAnimating = true;
+                this.isFadingOut = false;
+                this.opacity = 1.0;
+            }
+
+            startFadeOut() {
+                this.isFadingOut = true;
+                this.isAnimating = true;
+                this.opacity = 1.0; // Start at full opacity
+            }
+
+            update() {
+                if (this.isFadingOut) {
+                    // Fade out animation - reduce opacity instead of radius
+                    this.opacity -= 0.015; // Fade speed
+                    if (this.opacity <= 0) {
+                        this.opacity = 0;
+                        this.isAnimating = false;
+                        this.isFadingOut = false;
+                        return false; // Animation complete
+                    }
+                    return true; // Still animating
+                } else if (this.isAnimating && this.currentRadius < this.targetRadius) {
+                    // Fade in animation - expand radius
+                    this.currentRadius += this.bulb.propagationSpeed;
+                    
+                    // If opacity is less than 1, fade it back in smoothly
+                    if (this.opacity < 1.0) {
+                        this.opacity += 0.015; // Match fade-out speed
+                        if (this.opacity > 1.0) this.opacity = 1.0;
+                    }
+                    
+                    if (this.currentRadius >= this.targetRadius) {
+                        this.currentRadius = this.targetRadius;
+                        this.opacity = 1.0; // Ensure fully visible when complete
+                        this.isAnimating = false;
+                    }
+                    return true; // Still animating
+                } else if (this.currentRadius >= this.targetRadius) {
+                    // Fully on - keep drawing
+                    return true;
+                }
+                return false;
+            }
+
+            draw(ctx, walls, canvasWidth, canvasHeight) {
+                const shadowArcs = this.calculateShadowArcs(walls);
+                this.drawLightWithShadows(ctx, shadowArcs, canvasWidth, canvasHeight);
+            }
+
+            drawLightOnly(ctx) {
+                const maxDist = this.currentRadius;
+                
+                if (this.bulb.fadeStrength === 0) {
+                    const gradient = ctx.createRadialGradient(
+                        this.bulb.x, this.bulb.y, 0,
+                        this.bulb.x, this.bulb.y, maxDist
+                    );
+                    
+                    const rgb = this.hexToRgb(this.bulb.lightColor);
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.15 * this.opacity})`);
+                    gradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.08 * this.opacity})`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.02 * this.opacity})`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.bulb.x, this.bulb.y, maxDist, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    const fadeDistance = maxDist / (1 + this.bulb.fadeStrength);
+                    
+                    const gradient = ctx.createRadialGradient(
+                        this.bulb.x, this.bulb.y, 0,
+                        this.bulb.x, this.bulb.y, fadeDistance
+                    );
+                    
+                    const rgb = this.hexToRgb(this.bulb.lightColor);
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
+                    gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.bulb.x, this.bulb.y, fadeDistance, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            drawShadowsOnly(ctx, walls, canvasWidth, canvasHeight) {
+                const shadowArcs = this.calculateShadowArcs(walls);
+                const maxDist = Math.min(this.currentRadius, Math.sqrt(canvasWidth * canvasWidth + canvasHeight * canvasHeight));
+                
+                if (shadowArcs.length === 0) return;
+                
+                const extendDist = this.bulb.fadeStrength === 0 ? maxDist * 2 : (maxDist / (1 + this.bulb.fadeStrength)) * 2;
+                
+                shadowArcs.forEach(arc => {
+                    const wall = arc.wall;
+                    
+                    const dx1 = wall.x1 - this.bulb.x;
+                    const dy1 = wall.y1 - this.bulb.y;
+                    const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+                    const shadow1x = this.bulb.x + (dx1/len1) * extendDist;
+                    const shadow1y = this.bulb.y + (dy1/len1) * extendDist;
+                    
+                    const dx2 = wall.x2 - this.bulb.x;
+                    const dy2 = wall.y2 - this.bulb.y;
+                    const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                    const shadow2x = this.bulb.x + (dx2/len2) * extendDist;
+                    const shadow2y = this.bulb.y + (dy2/len2) * extendDist;
+                    
+                    ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+                    ctx.beginPath();
+                    ctx.moveTo(wall.x1, wall.y1);
+                    ctx.lineTo(wall.x2, wall.y2);
+                    ctx.lineTo(shadow2x, shadow2y);
+                    ctx.lineTo(shadow1x, shadow1y);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+            }
+
+            calculateShadowArcs(walls) {
+                const arcs = [];
+                
+                walls.forEach(wall => {
+                    const distToWall = this.distanceToWall(wall);
+                    if (distToWall > this.currentRadius) return;
+                    
+                    let segments;
+                    
+                    // Check if it's a wall with openings or a mirror
+                    if (wall.type === 'wall' && typeof wall.getSolidSegments === 'function') {
+                        segments = wall.getSolidSegments();
+                    } else {
+                        // Mirror or simple wall - treat as single segment
+                        segments = [{x1: wall.x1, y1: wall.y1, x2: wall.x2, y2: wall.y2}];
+                    }
+                    
+                    segments.forEach(segment => {
+                        // Calculate wall direction vector
+                        const dx = segment.x2 - segment.x1;
+                        const dy = segment.y2 - segment.y1;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Perpendicular vector (normalized) pointing right of wall direction
+                        const perpX = -dy / length;
+                        const perpY = dx / length;
+                        
+                        // Get wall center point
+                        const centerX = (segment.x1 + segment.x2) / 2;
+                        const centerY = (segment.y1 + segment.y2) / 2;
+                        
+                        // Vector from wall center to light
+                        const toLightX = this.bulb.x - centerX;
+                        const toLightY = this.bulb.y - centerY;
+                        
+                        // Determine which side the light is on using dot product
+                        const dotProduct = toLightX * perpX + toLightY * perpY;
+                        
+                        // Use FULL thickness as offset plus extra margin for round lineCap
+                        const offset = wall.thickness * 0.75; // Increased to 0.75 for better coverage
+                        let offsetX, offsetY;
+                        
+                        if (dotProduct > 0) {
+                            // Light on positive perpendicular side, shadow from negative edge
+                            offsetX = -perpX * offset;
+                            offsetY = -perpY * offset;
+                        } else {
+                            // Light on negative perpendicular side, shadow from positive edge
+                            offsetX = perpX * offset;
+                            offsetY = perpY * offset;
+                        }
+                        
+                        arcs.push({
+                            wall: {
+                                x1: segment.x1 + offsetX,
+                                y1: segment.y1 + offsetY,
+                                x2: segment.x2 + offsetX,
+                                y2: segment.y2 + offsetY
+                            }
+                        });
+                    });
+                });
+                
+                return arcs;
+            }
+
+            distanceToWall(wall) {
+                const x = this.bulb.x;
+                const y = this.bulb.y;
+                const x1 = wall.x1;
+                const y1 = wall.y1;
+                const x2 = wall.x2;
+                const y2 = wall.y2;
+                
+                const A = x - x1;
+                const B = y - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                let param = -1;
+                
+                if (lenSq !== 0) param = dot / lenSq;
+                
+                let xx, yy;
+                
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                
+                const dx = x - xx;
+                const dy = y - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            drawLightWithShadows(ctx, shadowArcs, canvasWidth, canvasHeight) {
+                const maxDist = Math.min(this.currentRadius, Math.sqrt(canvasWidth * canvasWidth + canvasHeight * canvasHeight));
+                
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                
+                if (this.bulb.fadeStrength === 0) {
+                    const gradient = ctx.createRadialGradient(
+                        this.bulb.x, this.bulb.y, 0,
+                        this.bulb.x, this.bulb.y, maxDist
+                    );
+                    
+                    const rgb = this.hexToRgb(this.bulb.lightColor);
+                    // Apply opacity for fade out effect
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.15 * this.opacity})`);
+                    gradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.08 * this.opacity})`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.02 * this.opacity})`);
+                    
+                    // Draw light circle first
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.bulb.x, this.bulb.y, maxDist, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw shadows as dark polygons ON TOP (not cutting out)
+                    if (shadowArcs.length > 0) {
+                        ctx.globalCompositeOperation = 'source-over';
+                        
+                        shadowArcs.forEach(arc => {
+                            const wall = arc.wall;
+                            const extendDist = maxDist * 2;
+                            
+                            const dx1 = wall.x1 - this.bulb.x;
+                            const dy1 = wall.y1 - this.bulb.y;
+                            const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+                            const shadow1x = this.bulb.x + (dx1/len1) * extendDist;
+                            const shadow1y = this.bulb.y + (dy1/len1) * extendDist;
+                            
+                            const dx2 = wall.x2 - this.bulb.x;
+                            const dy2 = wall.y2 - this.bulb.y;
+                            const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                            const shadow2x = this.bulb.x + (dx2/len2) * extendDist;
+                            const shadow2y = this.bulb.y + (dy2/len2) * extendDist;
+                            
+                            // Draw shadow as semi-transparent black
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+                            ctx.beginPath();
+                            ctx.moveTo(wall.x1, wall.y1);
+                            ctx.lineTo(wall.x2, wall.y2);
+                            ctx.lineTo(shadow2x, shadow2y);
+                            ctx.lineTo(shadow1x, shadow1y);
+                            ctx.closePath();
+                            ctx.fill();
+                        });
+                    }
+                } else {
+                    const fadeDistance = maxDist / (1 + this.bulb.fadeStrength);
+                    
+                    const gradient = ctx.createRadialGradient(
+                        this.bulb.x, this.bulb.y, 0,
+                        this.bulb.x, this.bulb.y, fadeDistance
+                    );
+                    
+                    const rgb = this.hexToRgb(this.bulb.lightColor);
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
+                    gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.bulb.x, this.bulb.y, fadeDistance, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    if (shadowArcs.length > 0) {
+                        ctx.globalCompositeOperation = 'source-over';
+                        
+                        shadowArcs.forEach(arc => {
+                            const wall = arc.wall;
+                            const extendDist = fadeDistance * 2;
+                            
+                            const dx1 = wall.x1 - this.bulb.x;
+                            const dy1 = wall.y1 - this.bulb.y;
+                            const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+                            const shadow1x = this.bulb.x + (dx1/len1) * extendDist;
+                            const shadow1y = this.bulb.y + (dy1/len1) * extendDist;
+                            
+                            const dx2 = wall.x2 - this.bulb.x;
+                            const dy2 = wall.y2 - this.bulb.y;
+                            const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                            const shadow2x = this.bulb.x + (dx2/len2) * extendDist;
+                            const shadow2y = this.bulb.y + (dy2/len2) * extendDist;
+                            
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+                            ctx.beginPath();
+                            ctx.moveTo(wall.x1, wall.y1);
+                            ctx.lineTo(wall.x2, wall.y2);
+                            ctx.lineTo(shadow2x, shadow2y);
+                            ctx.lineTo(shadow1x, shadow1y);
+                            ctx.closePath();
+                            ctx.fill();
+                        });
+                    }
+                }
+                
+                ctx.restore();
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : {r: 255, g: 255, b: 0};
+            }
+        }
+
+        // ============================================
+        // LIGHT BULB
+        // ============================================
+        class LightBulb {
+            constructor(x, y) {
+                this.type = 'bulb';
+                this.x = x;
+                this.y = y;
+                this.isOn = false;
+                this.selected = false;
+                this.name = 'مصباح';
+                this.scale = 1;
+                this.rotation = 0; // Rotation angle in radians
+                this.lightPreset = 'warm';
+                this.lightColor = LIGHT_PRESETS.warm.color;
+                this.fadeStrength = 0;
+                this.glowRadius = 250;
+                this.propagationSpeed = 300;
+                this.light = null;
+                
+                // Control properties - defaults to true for easier use
+                this.canRotate = true;
+                this.canMove = true;
+                this.canDelete = true;
+                this.hidden = false;
+            }
+
+            setLightPreset(preset) {
+                this.lightPreset = preset;
+                if (preset !== 'custom') {
+                    this.lightColor = LIGHT_PRESETS[preset].color;
+                }
+                this.updateLight();
+            }
+
+            updateLight() {
+                if (this.isOn) {
+                    if (!this.light) {
+                        // Create new light and start fade-in animation from zero
+                        this.light = new Light365(this);
+                        this.light.currentRadius = 0;
+                        this.light.opacity = 1.0;
+                        this.light.startAnimation();
+                    } else {
+                        // Light exists - handle smooth transitions
+                        if (this.light.isFadingOut) {
+                            // Was fading out, reverse to fade in from current opacity
+                            this.light.isFadingOut = false;
+                            this.light.isAnimating = true;
+                            // Keep current opacity and radius - will continue from where it was
+                        } else if (this.light.opacity <= 0 || this.light.currentRadius <= 0) {
+                            // Light was completely off, restart from zero
+                            this.light.currentRadius = 0;
+                            this.light.opacity = 1.0;
+                            this.light.startAnimation();
+                        } else if (!this.light.isAnimating && this.light.currentRadius < this.light.targetRadius) {
+                            // Was paused mid-animation, continue
+                            this.light.isAnimating = true;
+                        }
+                        // else: light is already fully on or animating in, do nothing
+                    }
+                } else {
+                    // Turn off
+                    if (this.light) {
+                        if (!this.light.isFadingOut && (this.light.currentRadius > 0 || this.light.opacity > 0)) {
+                            // Start fade-out animation only if not already fading out
+                            this.light.startFadeOut();
+                        }
+                    }
+                }
+            }
+
+            draw(ctx, showSelection = true) {
+                if (this.hidden) return;
+                
+                const scale = 0.5 * this.scale;
+                const offsetY = -30;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y); // Translate to actual bulb position first
+                ctx.rotate(this.rotation); // Apply rotation at center
+                ctx.translate(0, offsetY); // Then apply offset
+                ctx.scale(scale, scale);
+
+                if(this.isOn) {
+                    const scaledGlowRadius = this.glowRadius / scale;
+                    const rgb = this.hexToRgb(this.lightColor);
+                    const halo = ctx.createRadialGradient(0, 70, 40, 0, 70, scaledGlowRadius);
+                    halo.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`);
+                    halo.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
+                    halo.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fillStyle = halo;
+                    ctx.beginPath();
+                    ctx.arc(0, 70, scaledGlowRadius, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+
+                const bulbPath = new Path2D();
+                bulbPath.moveTo(-35, 130);
+                bulbPath.bezierCurveTo(-55, 120, -75, 90, -75, 60);
+                bulbPath.bezierCurveTo(-75, 30, -50, 10, 0, 5);
+                bulbPath.bezierCurveTo(50, 10, 75, 30, 75, 60);
+                bulbPath.bezierCurveTo(75, 90, 55, 120, 35, 130);
+                bulbPath.closePath();
+
+                const bulbGradient = ctx.createRadialGradient(0, 40, 10, 0, 60, 110);
+                if(this.isOn) {
+                    const rgb = this.hexToRgb(this.lightColor);
+                    bulbGradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1)`);
+                    bulbGradient.addColorStop(0.6, `rgba(${Math.min(255, rgb.r + 20)}, ${Math.min(255, rgb.g + 20)}, ${Math.min(255, rgb.b + 20)}, 0.9)`);
+                    bulbGradient.addColorStop(1, `rgba(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 30)}, 0.95)`);
+                } else {
+                    bulbGradient.addColorStop(0, '#e0e0e0');
+                    bulbGradient.addColorStop(0.7, '#c0c0c0');
+                    bulbGradient.addColorStop(1, '#a0a0a0');
+                }
+                ctx.fillStyle = bulbGradient;
+                ctx.fill(bulbPath);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#b0b0b0';
+                ctx.stroke(bulbPath);
+
+                ctx.save();
+                ctx.clip(bulbPath);
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = this.isOn ? 0.4 : 0.2;
+                ctx.beginPath();
+                ctx.ellipse(-30, 35, 18, 40, -0.2, 0, Math.PI*2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                
+                if(this.isOn) {
+                    const halo2 = ctx.createRadialGradient(0, 70, 20, 0, 70, 120);
+                    halo2.addColorStop(0, 'rgba(255,255,255, 0.3)');
+                    halo2.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = halo2;
+                    ctx.beginPath();
+                    ctx.arc(0, 70, 130, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                ctx.restore();
+                ctx.globalCompositeOperation = 'source-over';
+
+                if(this.isOn) {
+                    ctx.shadowBlur = 20;
+                    const rgb = this.hexToRgb(this.lightColor);
+                    ctx.shadowColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                }
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.isOn ? this.lightColor : '#8a7a64';
+                ctx.beginPath();
+                ctx.moveTo(-20, 70);
+                ctx.bezierCurveTo(-15, 55, -5, 50, 0, 55);
+                ctx.bezierCurveTo(5, 60, 15, 60, 20, 50);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+                ctx.moveTo(-35, 130);
+                ctx.lineTo(-30, 145);
+                ctx.lineTo(30, 145);
+                ctx.lineTo(35, 130);
+                ctx.fillStyle = '#e8e8e8';
+                ctx.fill();
+                ctx.strokeStyle = '#a0a0a0';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                const baseStartY = 145;
+                const threadHeight = 9;
+                for(let i=0; i<5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-30 + i*0.5, baseStartY + i*threadHeight);
+                    ctx.lineTo(-30 + i*0.5, baseStartY + (i+1)*threadHeight);
+                    ctx.lineTo(30 - i*0.5, baseStartY + (i+1)*threadHeight);
+                    ctx.lineTo(30 - i*0.5, baseStartY + i*threadHeight);
+                    ctx.closePath();
+                    ctx.fillStyle = i%2===0 ? '#d0d0d0' : '#b8b8b8';
+                    ctx.fill();
+                }
+
+                const holderY = baseStartY + 45;
+                ctx.fillStyle = '#34495e';
+                ctx.fillRect(-55, holderY, 110, 45);
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-55, holderY, 110, 45);
+
+                ctx.strokeStyle = '#4a6278';
+                ctx.lineWidth = 1;
+                for(let i=1; i<4; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-50, holderY + i*11);
+                    ctx.lineTo(50, holderY + i*11);
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                ctx.ellipse(0, holderY + 2, 27, 5, 0, 0, Math.PI*2);
+                ctx.fillStyle = '#1a252f';
+                ctx.fill();
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(-60, holderY + 45, 120, 10);
+                ctx.strokeStyle = '#1a252f';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-60, holderY + 45, 120, 10);
+
+                ctx.beginPath();
+                ctx.arc(-40, holderY + 50, 3.5, 0, Math.PI*2);
+                ctx.arc(40, holderY + 50, 3.5, 0, Math.PI*2);
+                ctx.fillStyle = '#7f8c8d';
+                ctx.fill();
+
+                if(this.selected && showSelection) {
+                    // Edit mode - Draw selection OUTSIDE the rotated/scaled context
+                    ctx.restore(); // Exit the transformed context first
+                    ctx.save();
+                    
+                    // Draw at actual bulb position
+                    ctx.translate(this.x, this.y);
+                    
+                    // Draw pulsing selection ring AROUND the entire bulb
+                    const ringRadius = 70 * this.scale; // Based on bulb size
+                    const pulse = Math.sin(Date.now() / 300) * 3 + 3;
+                    
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 3 + pulse;
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    
+                    // Draw rotation handle that rotates with bulb
+                    ctx.rotate(this.rotation);
+                    
+                    const handleDist = 90 * this.scale;
+                    const rotHandleX = 0;
+                    const rotHandleY = -handleDist;
+                    
+                    // Line to rotation handle
+                    ctx.strokeStyle = '#27ae60';
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(rotHandleX, rotHandleY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Rotation handle circle
+                    ctx.fillStyle = '#27ae60';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (this.selected && !showSelection) {
+                    // Preview mode - show ring selection and rotation handle if canRotate
+                    ctx.restore();
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    
+                    const ringRadius = 70 * this.scale;
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([8, 4]);
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.shadowBlur = 0;
+                    
+                    // Show rotation handle if canRotate is true
+                    if (this.canRotate) {
+                        ctx.rotate(this.rotation);
+                        
+                        const handleDist = 90 * this.scale;
+                        const rotHandleX = 0;
+                        const rotHandleY = -handleDist;
+                        
+                        ctx.strokeStyle = '#27ae60';
+                        ctx.setLineDash([5, 5]);
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(rotHandleX, rotHandleY);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        ctx.fillStyle = '#27ae60';
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.restore();
+            }
+
+            isPointInHandle(x, y) {
+                // Transform point to bulb's local coordinate system
+                const dx = x - this.x;
+                const dy = y - this.y;
+                
+                // Rotate point backwards
+                const cos = Math.cos(-this.rotation);
+                const sin = Math.sin(-this.rotation);
+                const localX = dx * cos - dy * sin;
+                const localY = dx * sin + dy * cos;
+                
+                // Check in local space - matching wall handle size
+                const handleDist = 90 * this.scale;
+                const rotHandleY = -handleDist;
+                const dist = Math.sqrt(Math.pow(localX, 2) + Math.pow(localY - rotHandleY, 2));
+                
+                if (dist <= 10) return 'rotate';
+                return null;
+            }
+
+            rotateToPoint(px, py) {
+                this.rotation = Math.atan2(py - this.y, px - this.x);
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : {r: 255, g: 255, b: 0};
+            }
+
+            isPointInside(x, y) {
+                const dx = x - this.x;
+                const dy = y - this.y;
+                return Math.sqrt(dx * dx + dy * dy) <= 120 * this.scale;
+            }
+
+            toggle() {
+                this.isOn = !this.isOn;
+                this.updateLight();
+            }
+        }
+
+        // ============================================
+        // MIRROR CLASS
+        // ============================================
+
+        // ============================================
+        // MIRROR CLASS
+        // ============================================
+        class Mirror {
+            constructor(x1, y1, x2, y2) {
+                this.type = 'mirror';
+                this.x1 = x1;
+                this.y1 = y1;
+                this.x2 = x2;
+                this.y2 = y2;
+                this.selected = false;
+                this.name = 'مرآة';
+                this.thickness = 6;
+                this.color = '#C0C0C0'; // Silver color
+                this.reflectiveColor = '#E8E8E8';
+                
+                // Mirror types: 'preserve', 'parallel', 'concave'
+                this.mirrorType = 'preserve'; // preserve spread, parallel beam, concave/convex
+                this.curvatureLevel = 0; // Positive = concave (converging), Negative = convex (diverging)
+                
+                // Control properties
+                this.canRotate = true;
+                this.canMove = true;
+                this.canDelete = true;
+                this.hidden = false;
+            }
+
+            draw(ctx, showSelection = true) {
+                if (this.hidden) return;
+                
+                ctx.save();
+                
+                // Calculate perpendicular direction
+                const dx = this.x2 - this.x1;
+                const dy = this.y2 - this.y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const perpX = -dy / length;
+                const perpY = dx / length;
+                
+                // Draw back layer (darker - non-reflective side)
+                const backOffset = this.thickness * 0.4;
+                ctx.strokeStyle = '#404040'; // Dark gray
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x1 - perpX * backOffset, this.y1 - perpY * backOffset);
+                ctx.lineTo(this.x2 - perpX * backOffset, this.y2 - perpY * backOffset);
+                ctx.stroke();
+                
+                // Draw middle layer (base)
+                ctx.strokeStyle = '#808080';
+                ctx.lineWidth = this.thickness;
+                ctx.beginPath();
+                ctx.moveTo(this.x1, this.y1);
+                ctx.lineTo(this.x2, this.y2);
+                ctx.stroke();
+                
+                // Draw reflective surface (bright side - front)
+                const frontOffset = this.thickness * 0.4;
+                ctx.strokeStyle = this.reflectiveColor;
+                ctx.lineWidth = this.thickness * 0.8;
+                ctx.beginPath();
+                ctx.moveTo(this.x1 + perpX * frontOffset, this.y1 + perpY * frontOffset);
+                ctx.lineTo(this.x2 + perpX * frontOffset, this.y2 + perpY * frontOffset);
+                ctx.stroke();
+                
+                // Add shine effect on reflective side
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const shineOffset = this.thickness * 0.5;
+                ctx.moveTo(this.x1 + perpX * shineOffset, this.y1 + perpY * shineOffset);
+                ctx.lineTo(this.x2 + perpX * shineOffset, this.y2 + perpY * shineOffset);
+                ctx.stroke();
+                
+                ctx.restore();
+
+                // Selection indicators (same as wall)
+                if (this.selected && showSelection) {
+                    ctx.save();
+                    
+                    ctx.strokeStyle = 'rgba(64, 224, 208, 0.8)'; // Turquoise for mirror
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1, this.y1);
+                    ctx.lineTo(this.x2, this.y2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Draw endpoint handles
+                    ctx.fillStyle = '#40E0D0';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x1, this.y1, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(this.x2, this.y2, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Draw rotation handle
+                    const midX = (this.x1 + this.x2) / 2;
+                    const midY = (this.y1 + this.y2) / 2;
+                    const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                    const perpAngle = angle + Math.PI / 2;
+                    const handleDist = 40;
+                    const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                    const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                    
+                    ctx.strokeStyle = '#27ae60';
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(midX, midY);
+                    ctx.lineTo(rotHandleX, rotHandleY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    ctx.fillStyle = '#27ae60';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (this.selected && !showSelection) {
+                    ctx.save();
+                    
+                    const dx = this.x2 - this.x1;
+                    const dy = this.y2 - this.y1;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const perpX = -dy / length;
+                    const perpY = dx / length;
+                    const offset = this.thickness / 2 + 3;
+                    
+                    ctx.strokeStyle = '#40E0D0';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1 + perpX * offset, this.y1 + perpY * offset);
+                    ctx.lineTo(this.x2 + perpX * offset, this.y2 + perpY * offset);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1 - perpX * offset, this.y1 - perpY * offset);
+                    ctx.lineTo(this.x2 - perpX * offset, this.y2 - perpY * offset);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([]);
+                    
+                    if (this.canRotate) {
+                        const midX = (this.x1 + this.x2) / 2;
+                        const midY = (this.y1 + this.y2) / 2;
+                        const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                        const perpAngle = angle + Math.PI / 2;
+                        const handleDist = 40;
+                        const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                        const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                        
+                        ctx.strokeStyle = '#27ae60';
+                        ctx.setLineDash([5, 5]);
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(midX, midY);
+                        ctx.lineTo(rotHandleX, rotHandleY);
+                        ctx.stroke();
+                        ctx.setLineDash([])
+                        
+                        ctx.fillStyle = '#27ae60';
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+
+            isPointInHandle(x, y) {
+                const dist1 = Math.sqrt(Math.pow(x - this.x1, 2) + Math.pow(y - this.y1, 2));
+                const dist2 = Math.sqrt(Math.pow(x - this.x2, 2) + Math.pow(y - this.y2, 2));
+                
+                if (dist1 <= 10) return 'start';
+                if (dist2 <= 10) return 'end';
+                
+                const midX = (this.x1 + this.x2) / 2;
+                const midY = (this.y1 + this.y2) / 2;
+                const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                const perpAngle = angle + Math.PI / 2;
+                const handleDist = 40;
+                const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                const distRot = Math.sqrt(Math.pow(x - rotHandleX, 2) + Math.pow(y - rotHandleY, 2));
+                
+                if (distRot <= 20) return 'rotate';
+                
+                return null;
+            }
+
+            rotateToPoint(px, py) {
+                const midX = (this.x1 + this.x2) / 2;
+                const midY = (this.y1 + this.y2) / 2;
+                const length = this.getLength();
+                const newAngle = Math.atan2(py - midY, px - midX);
+                
+                this.x1 = midX - Math.cos(newAngle) * length / 2;
+                this.y1 = midY - Math.sin(newAngle) * length / 2;
+                this.x2 = midX + Math.cos(newAngle) * length / 2;
+                this.y2 = midY + Math.sin(newAngle) * length / 2;
+            }
+
+            resizeEndpoint(handle, x, y) {
+                if (handle === 'start') {
+                    this.x1 = x;
+                    this.y1 = y;
+                } else if (handle === 'end') {
+                    this.x2 = x;
+                    this.y2 = y;
+                }
+            }
+
+            isPointInside(x, y) {
+                const dist = this.distanceToPoint(x, y);
+                return dist <= (this.thickness / 2) + 15;
+            }
+
+            distanceToPoint(x, y) {
+                const A = x - this.x1;
+                const B = y - this.y1;
+                const C = this.x2 - this.x1;
+                const D = this.y2 - this.y1;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                
+                let param = -1;
+                if (lenSq !== 0) {
+                    param = dot / lenSq;
+                }
+                
+                let xx, yy;
+                
+                if (param < 0) {
+                    xx = this.x1;
+                    yy = this.y1;
+                } else if (param > 1) {
+                    xx = this.x2;
+                    yy = this.y2;
+                } else {
+                    xx = this.x1 + param * C;
+                    yy = this.y1 + param * D;
+                }
+                
+                const dx = x - xx;
+                const dy = y - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            getLength() {
+                const dx = this.x2 - this.x1;
+                const dy = this.y2 - this.y1;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            // Calculate reflection for incoming light
+            reflect(incomingAngle, spreadAngle, lightX, lightY) {
+                // Get mirror direction and perpendicular (normal)
+                const dx = this.x2 - this.x1;
+                const dy = this.y2 - this.y1;
+                const mirrorAngle = Math.atan2(dy, dx);
+                const normalAngle = mirrorAngle + Math.PI / 2;
+                
+                // Check if light is hitting the reflective side (front)
+                const mirrorMidX = (this.x1 + this.x2) / 2;
+                const mirrorMidY = (this.y1 + this.y2) / 2;
+                
+                // Vector from mirror to light
+                const toLightX = lightX - mirrorMidX;
+                const toLightY = lightY - mirrorMidY;
+                
+                // Normal vector pointing in perpendicular direction
+                const normalX = Math.cos(normalAngle);
+                const normalY = Math.sin(normalAngle);
+                
+                // Dot product to determine which side
+                const dotProduct = toLightX * normalX + toLightY * normalY;
+                
+                // If dotProduct is negative, light is hitting the back side - no reflection
+                if (dotProduct < 0) {
+                    return null; // No reflection from back side
+                }
+                
+                // Reflect the incoming angle around the normal
+                const reflectedAngle = 2 * normalAngle - incomingAngle;
+                
+                // Calculate new spread based on mirror type
+                let newSpread = spreadAngle;
+                
+                if (this.mirrorType === 'parallel') {
+                    newSpread = 0; // Parallel beam
+                } else if (this.mirrorType === 'concave') {
+                    if (this.curvatureLevel > 0) {
+                        // Concave - converging
+                        newSpread = Math.max(0, spreadAngle - this.curvatureLevel * 0.01);
+                    } else if (this.curvatureLevel < 0) {
+                        // Convex - diverging
+                        newSpread = spreadAngle + Math.abs(this.curvatureLevel) * 0.01;
+                    }
+                }
+                // If 'preserve', keep original spread
+                
+                return {
+                    angle: reflectedAngle,
+                    spread: newSpread
+                };
+            }
+        }
+
+        // ============================================
+        // LIGHT BEAM CLASS
+        // ============================================
+        class LightBeam {
+            constructor(sourceX, sourceY, angle, spread, color, intensity, maxDistance) {
+                this.sourceX = sourceX;
+                this.sourceY = sourceY;
+                this.angle = angle;
+                this.spread = spread; // Cone angle in radians
+                this.color = color;
+                this.intensity = intensity;
+                this.maxDistance = maxDistance;
+            }
+
+            draw(ctx, walls, mirrors) {
+                if (this.intensity < 0.01) return;
+                
+                const rgb = this.hexToRgb(this.color);
+                
+                // Draw cone of light
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                
+                if (this.spread === 0) {
+                    // Parallel beam
+                    const beamWidth = 20;
+                    const endX = this.sourceX + Math.cos(this.angle) * this.maxDistance;
+                    const endY = this.sourceY + Math.sin(this.angle) * this.maxDistance;
+                    
+                    const perpX = -Math.sin(this.angle);
+                    const perpY = Math.cos(this.angle);
+                    
+                    const gradient = ctx.createLinearGradient(
+                        this.sourceX, this.sourceY,
+                        endX, endY
+                    );
+                    
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.3 * this.intensity})`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.05 * this.intensity})`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(this.sourceX + perpX * beamWidth, this.sourceY + perpY * beamWidth);
+                    ctx.lineTo(endX + perpX * beamWidth, endY + perpY * beamWidth);
+                    ctx.lineTo(endX - perpX * beamWidth, endY - perpY * beamWidth);
+                    ctx.lineTo(this.sourceX - perpX * beamWidth, this.sourceY - perpY * beamWidth);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    // Cone beam
+                    const startAngle = this.angle - this.spread / 2;
+                    const endAngle = this.angle + this.spread / 2;
+                    
+                    const gradient = ctx.createRadialGradient(
+                        this.sourceX, this.sourceY, 0,
+                        this.sourceX, this.sourceY, this.maxDistance
+                    );
+                    
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.3 * this.intensity})`);
+                    gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.15 * this.intensity})`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.02 * this.intensity})`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(this.sourceX, this.sourceY);
+                    ctx.arc(this.sourceX, this.sourceY, this.maxDistance, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : {r: 255, g: 255, b: 0};
+            }
+        }
+
+        // ============================================
+        // WALL CLASS
+        // ============================================
+        class Wall {
+            constructor(x1, y1, x2, y2) {
+                this.type = 'wall';
+                this.x1 = x1;
+                this.y1 = y1;
+                this.x2 = x2;
+                this.y2 = y2;
+                this.selected = false;
+                this.name = 'جدار';
+                this.thickness = 8;
+                this.color = '#8B4513';
+                this.openings = []; // [{position: 0.3, width: 0.15}]
+                
+                // Brick divisions properties
+                this.showDivisions = false;
+                this.divisionSize = 50; // Size of each brick in pixels
+                this.divisionColor = '#654321';
+                this.divisionThickness = 2;
+                
+                // Control properties - defaults to true for easier use
+                this.canRotate = true;
+                this.canMove = true;
+                this.canDelete = true;
+                this.hidden = false;
+            }
+
+            addOpening(startPixel, widthPixel) {
+                // Convert pixels to normalized positions (0-1)
+                const length = this.getLength();
+                const position = startPixel / length;
+                const width = widthPixel / length;
+                
+                this.openings.push({ 
+                    startPixel, 
+                    widthPixel,
+                    position, 
+                    width 
+                });
+                this.openings.sort((a, b) => a.position - b.position);
+            }
+
+            updateOpening(index, startPixel, widthPixel) {
+                if (index >= 0 && index < this.openings.length) {
+                    const length = this.getLength();
+                    this.openings[index].startPixel = startPixel;
+                    this.openings[index].widthPixel = widthPixel;
+                    this.openings[index].position = startPixel / length;
+                    this.openings[index].width = widthPixel / length;
+                    this.openings.sort((a, b) => a.position - b.position);
+                }
+            }
+
+            removeOpening(index) {
+                this.openings.splice(index, 1);
+            }
+
+            getSolidSegments() {
+                if (this.openings.length === 0) {
+                    return [{x1: this.x1, y1: this.y1, x2: this.x2, y2: this.y2}];
+                }
+
+                const segments = [];
+                const length = this.getLength();
+                const dx = this.x2 - this.x1;
+                const dy = this.y2 - this.y1;
+
+                let lastEnd = 0;
+
+                this.openings.forEach(opening => {
+                    const start = opening.position;
+                    const end = opening.position + opening.width;
+
+                    // Add segment before opening
+                    if (start > lastEnd) {
+                        const seg = {
+                            x1: this.x1 + dx * lastEnd,
+                            y1: this.y1 + dy * lastEnd,
+                            x2: this.x1 + dx * start,
+                            y2: this.y1 + dy * start
+                        };
+                        segments.push(seg);
+                    }
+
+                    lastEnd = end;
+                });
+
+                // Add final segment
+                if (lastEnd < 1) {
+                    const seg = {
+                        x1: this.x1 + dx * lastEnd,
+                        y1: this.y1 + dy * lastEnd,
+                        x2: this.x2,
+                        y2: this.y2
+                    };
+                    segments.push(seg);
+                }
+
+                return segments;
+            }
+
+            drawBrickDivisions(ctx, segment) {
+                const dx = segment.x2 - segment.x1;
+                const dy = segment.y2 - segment.y1;
+                const segmentLength = Math.sqrt(dx * dx + dy * dy);
+                
+                if (segmentLength < this.divisionSize) return;
+                
+                // Number of divisions
+                const numDivisions = Math.floor(segmentLength / this.divisionSize);
+                
+                // Draw perpendicular lines for brick divisions
+                ctx.strokeStyle = this.divisionColor;
+                ctx.lineWidth = this.divisionThickness;
+                ctx.lineCap = 'butt';
+                
+                // Calculate perpendicular direction
+                const perpX = -dy / segmentLength;
+                const perpY = dx / segmentLength;
+                const halfThickness = this.thickness / 2;
+                
+                for (let i = 1; i < numDivisions; i++) {
+                    const t = i / numDivisions;
+                    const px = segment.x1 + dx * t;
+                    const py = segment.y1 + dy * t;
+                    
+                    // Draw line perpendicular to wall
+                    ctx.beginPath();
+                    ctx.moveTo(px - perpX * halfThickness, py - perpY * halfThickness);
+                    ctx.lineTo(px + perpX * halfThickness, py + perpY * halfThickness);
+                    ctx.stroke();
+                }
+            }
+
+            draw(ctx, showSelection = true) {
+                if (this.hidden) return;
+                
+                ctx.save();
+                
+                // Draw solid segments
+                const segments = this.getSolidSegments();
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                
+                segments.forEach(seg => {
+                    ctx.beginPath();
+                    ctx.moveTo(seg.x1, seg.y1);
+                    ctx.lineTo(seg.x2, seg.y2);
+                    ctx.stroke();
+                    
+                    // Draw brick divisions if enabled
+                    if (this.showDivisions) {
+                        this.drawBrickDivisions(ctx, seg);
+                    }
+                });
+                
+                ctx.restore();
+
+                // Draw openings indicators - only in edit mode when selected
+                if (this.selected && this.openings.length > 0 && showSelection) {
+                    ctx.save();
+                    
+                    // Draw gray dots at opening positions
+                    this.openings.forEach(opening => {
+                        const dx = this.x2 - this.x1;
+                        const dy = this.y2 - this.y1;
+                        
+                        // Start dot
+                        const startX = this.x1 + dx * opening.position;
+                        const startY = this.y1 + dy * opening.position;
+                        ctx.fillStyle = '#888888';
+                        ctx.beginPath();
+                        ctx.arc(startX, startY, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // End dot
+                        const endX = this.x1 + dx * (opening.position + opening.width);
+                        const endY = this.y1 + dy * (opening.position + opening.width);
+                        ctx.fillStyle = '#888888';
+                        ctx.beginPath();
+                        ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    
+                    // Draw green dashed line for openings
+                    ctx.strokeStyle = '#44FF44';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([8, 4]);
+                    
+                    this.openings.forEach(opening => {
+                        const dx = this.x2 - this.x1;
+                        const dy = this.y2 - this.y1;
+                        const x1 = this.x1 + dx * opening.position;
+                        const y1 = this.y1 + dy * opening.position;
+                        const x2 = this.x1 + dx * (opening.position + opening.width);
+                        const y2 = this.y1 + dy * (opening.position + opening.width);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    });
+                    
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+                
+                // Selection indicators
+                if (this.selected && showSelection) {
+                    ctx.save();
+                    
+                    // Very thin outline in edit mode
+                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1, this.y1);
+                    ctx.lineTo(this.x2, this.y2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Draw endpoint handles
+                    ctx.fillStyle = '#3498db';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x1, this.y1, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(this.x2, this.y2, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Draw rotation handle
+                    const midX = (this.x1 + this.x2) / 2;
+                    const midY = (this.y1 + this.y2) / 2;
+                    const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                    const perpAngle = angle + Math.PI / 2;
+                    const handleDist = 40;
+                    const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                    const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                    
+                    ctx.strokeStyle = '#27ae60';
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(midX, midY);
+                    ctx.lineTo(rotHandleX, rotHandleY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    ctx.fillStyle = '#27ae60';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (this.selected && !showSelection) {
+                    // Preview mode - show dashed outline on BOTH sides AND handles if canMove/canRotate
+                    ctx.save();
+                    
+                    // Get perpendicular direction
+                    const dx = this.x2 - this.x1;
+                    const dy = this.y2 - this.y1;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const perpX = -dy / length;
+                    const perpY = dx / length;
+                    const offset = this.thickness / 2 + 3;
+                    
+                    // Draw two parallel dashed lines
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    
+                    // Line 1 (above)
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1 + perpX * offset, this.y1 + perpY * offset);
+                    ctx.lineTo(this.x2 + perpX * offset, this.y2 + perpY * offset);
+                    ctx.stroke();
+                    
+                    // Line 2 (below)
+                    ctx.beginPath();
+                    ctx.moveTo(this.x1 - perpX * offset, this.y1 - perpY * offset);
+                    ctx.lineTo(this.x2 - perpX * offset, this.y2 - perpY * offset);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([]);
+                    
+                    // Draw rotation handle if canRotate
+                    if (this.canRotate) {
+                        const midX = (this.x1 + this.x2) / 2;
+                        const midY = (this.y1 + this.y2) / 2;
+                        const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                        const perpAngle = angle + Math.PI / 2;
+                        const handleDist = 40;
+                        const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                        const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                        
+                        ctx.strokeStyle = '#27ae60';
+                        ctx.setLineDash([5, 5]);
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(midX, midY);
+                        ctx.lineTo(rotHandleX, rotHandleY);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        ctx.fillStyle = '#27ae60';
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(rotHandleX, rotHandleY, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+
+            isPointInHandle(x, y) {
+                const dist1 = Math.sqrt(Math.pow(x - this.x1, 2) + Math.pow(y - this.y1, 2));
+                const dist2 = Math.sqrt(Math.pow(x - this.x2, 2) + Math.pow(y - this.y2, 2));
+                
+                if (dist1 <= 10) return 'start';
+                if (dist2 <= 10) return 'end';
+                
+                const midX = (this.x1 + this.x2) / 2;
+                const midY = (this.y1 + this.y2) / 2;
+                const angle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                const perpAngle = angle + Math.PI / 2;
+                const handleDist = 40;
+                const rotHandleX = midX + Math.cos(perpAngle) * handleDist;
+                const rotHandleY = midY + Math.sin(perpAngle) * handleDist;
+                const distRot = Math.sqrt(Math.pow(x - rotHandleX, 2) + Math.pow(y - rotHandleY, 2));
+                
+                if (distRot <= 20) return 'rotate'; // Increased from 15 to 20 for even easier clicking
+                
+                return null;
+            }
+
+            rotateToPoint(px, py) {
+                const midX = (this.x1 + this.x2) / 2;
+                const midY = (this.y1 + this.y2) / 2;
+                const length = this.getLength();
+                const newAngle = Math.atan2(py - midY, px - midX);
+                
+                this.x1 = midX - Math.cos(newAngle) * length / 2;
+                this.y1 = midY - Math.sin(newAngle) * length / 2;
+                this.x2 = midX + Math.cos(newAngle) * length / 2;
+                this.y2 = midY + Math.sin(newAngle) * length / 2;
+            }
+
+            resizeEndpoint(handle, x, y) {
+                if (handle === 'start') {
+                    this.x1 = x;
+                    this.y1 = y;
+                } else if (handle === 'end') {
+                    this.x2 = x;
+                    this.y2 = y;
+                }
+            }
+
+            isPointInside(x, y) {
+                const dist = this.distanceToPoint(x, y);
+                return dist <= (this.thickness / 2) + 15; // Increased to 15px for easier selection
+            }
+
+            distanceToPoint(x, y) {
+                const A = x - this.x1;
+                const B = y - this.y1;
+                const C = this.x2 - this.x1;
+                const D = this.y2 - this.y1;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                
+                let param = -1;
+                if (lenSq !== 0) {
+                    param = dot / lenSq;
+                }
+                
+                let xx, yy;
+                
+                if (param < 0) {
+                    xx = this.x1;
+                    yy = this.y1;
+                } else if (param > 1) {
+                    xx = this.x2;
+                    yy = this.y2;
+                } else {
+                    xx = this.x1 + param * C;
+                    yy = this.y1 + param * D;
+                }
+                
+                const dx = x - xx;
+                const dy = y - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            getLength() {
+                const dx = this.x2 - this.x1;
+                const dy = this.y2 - this.y1;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+        }
+
+        // ============================================
+        // GAME ENGINE
+        // ============================================
+        class Game {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.objects = [];
+                this.selectedObject = null;
+                this.isDragging = false;
+                this.isRotating = false;
+                this.isResizing = false;
+                this.resizeHandle = null;
+                this.dragStartX = 0;
+                this.dragStartY = 0;
+                this.rotationStartAngle = 0; // Store starting angle for smooth rotation
+                this.objectStartRotation = 0; // Store object's initial rotation
+                this.isPreviewMode = false;
+                this.currentTool = 'select';
+                this.isDrawingWall = false;
+                this.wallStartX = 0;
+                this.wallStartY = 0;
+                this.tempWallEndX = 0;
+                this.tempWallEndY = 0;
+                this.lastFrameTime = Date.now();
+                this.setupEvents();
+                this.startAnimationLoop();
+            }
+
+            startAnimationLoop() {
+                const loop = () => {
+                    const now = Date.now();
+                    const deltaTime = (now - this.lastFrameTime) / 1000;
+                    this.lastFrameTime = now;
+                    
+                    let needsRedraw = false;
+                    
+                    this.objects.forEach(obj => {
+                        if (obj.type === 'bulb') {
+                            if (obj.light) {
+                                const actualSpeed = obj.propagationSpeed * deltaTime;
+                                const oldSpeed = obj.propagationSpeed;
+                                obj.propagationSpeed = actualSpeed;
+                                
+                                const stillAnimating = obj.light.update();
+                                if (stillAnimating) {
+                                    needsRedraw = true;
+                                }
+                                
+                                // Remove light only when fadeout is complete
+                                if (obj.light.currentRadius === 0 && obj.light.isFadingOut) {
+                                    obj.light = null;
+                                    needsRedraw = true;
+                                }
+                                
+                                obj.propagationSpeed = oldSpeed;
+                            }
+                        }
+                    });
+                    
+                    if (needsRedraw) {
+                        this.render();
+                    }
+                    
+                    requestAnimationFrame(loop);
+                };
+                
+                requestAnimationFrame(loop);
+            }
+
+            setPreviewMode(isPreview) {
+                this.isPreviewMode = isPreview;
+                
+                const badge = document.getElementById('mode-badge');
+                const btnPreview = document.getElementById('btn-preview');
+                const btnEdit = document.getElementById('btn-edit');
+                const btnSelect = document.getElementById('btn-select');
+                const btnAddBulb = document.getElementById('btn-add-bulb');
+                const btnAddWall = document.getElementById('btn-add-wall');
+                
+                if (isPreview) {
+                    badge.textContent = 'وضع المعاينة';
+                    badge.className = 'mode-badge preview';
+                    btnPreview.style.display = 'none';
+                    btnEdit.style.display = 'inline-block';
+                    btnSelect.style.display = 'none';
+                    btnAddBulb.style.display = 'none';
+                    btnAddWall.style.display = 'none';
+                    this.canvas.classList.add('preview-mode');
+                    
+                    if (this.selectedObject) {
+                        this.selectedObject.selected = false;
+                        this.selectedObject = null;
+                        this.updateProperties();
+                    }
+                } else {
+                    badge.textContent = 'وضع التحرير';
+                    badge.className = 'mode-badge edit';
+                    btnPreview.style.display = 'inline-block';
+                    btnEdit.style.display = 'none';
+                    btnSelect.style.display = 'inline-block';
+                    btnAddBulb.style.display = 'inline-block';
+                    btnAddWall.style.display = 'inline-block';
+                    this.canvas.classList.remove('preview-mode');
+                    
+                    this.currentTool = 'select';
+                    btnSelect.classList.add('active');
+                    btnAddBulb.classList.remove('active');
+                    btnAddWall.classList.remove('active');
+                }
+                
+                this.render();
+            }
+
+            addBulb(x, y) {
+                const bulb = new LightBulb(x, y);
+                this.objects.push(bulb);
+                this.selectObject(bulb);
+                this.render();
+            }
+
+            addWall(x1, y1, x2, y2) {
+                const wall = new Wall(x1, y1, x2, y2);
+                this.objects.push(wall);
+                this.selectObject(wall);
+                this.render();
+            }
+
+            addMirror(x1, y1, x2, y2) {
+                const mirror = new Mirror(x1, y1, x2, y2);
+                this.objects.push(mirror);
+                this.selectObject(mirror);
+                this.render();
+            }
+
+            selectObject(obj) {
+                if (this.selectedObject) {
+                    this.selectedObject.selected = false;
+                }
+                this.selectedObject = obj;
+                if (obj) {
+                    obj.selected = true;
+                }
+                this.updateProperties();
+                this.render();
+            }
+
+            getObjectAt(x, y) {
+                for (let i = this.objects.length - 1; i >= 0; i--) {
+                    const obj = this.objects[i];
+                    
+                    if (obj.type === 'bulb') {
+                        if (obj.isPointInside(x, y)) {
+                            return obj;
+                        }
+                    } else if (obj.type === 'wall' || obj.type === 'mirror') {
+                        if (obj.isPointInside(x, y)) {
+                            return obj;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            updateProperties() {
+                const content = document.getElementById('properties-content');
+                const header = document.getElementById('properties-header');
+                
+                if (!this.selectedObject) {
+                    header.textContent = 'الخصائص';
+                    content.innerHTML = `
+                        <div class="info-box">
+                            <h3>🎮 الأدوات</h3>
+                            <p>• <strong>💡 مصباح:</strong> ضوء 360 درجة مع ألوان</p>
+                            <p>• <strong>🧱 جدار:</strong> يحجب الضوء + فتحات</p>
+                            <p>• <strong>نقر مزدوج:</strong> تشغيل/إطفاء</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (this.selectedObject.type === 'bulb') {
+                    this.updateBulbProperties();
+                } else if (this.selectedObject.type === 'wall') {
+                    this.updateWallProperties();
+                } else if (this.selectedObject.type === 'mirror') {
+                    this.updateMirrorProperties();
+                }
+            }
+
+            updateBulbProperties() {
+                const header = document.getElementById('properties-header');
+                const content = document.getElementById('properties-content');
+                const b = this.selectedObject;
+                
+                header.textContent = '💡 خصائص المصباح';
+                
+                let presetsHTML = '<div class="light-preset-colors">';
+                for (const [key, preset] of Object.entries(LIGHT_PRESETS)) {
+                    const active = b.lightPreset === key ? 'active' : '';
+                    presetsHTML += `<div class="preset-color ${active}" 
+                        style="background-color: ${preset.color}" 
+                        data-preset="${key}" 
+                        title="${preset.name}"></div>`;
+                }
+                presetsHTML += '</div>';
+                
+                content.innerHTML = `
+                    <div class="property-row">
+                        <div class="property-label">الاسم</div>
+                        <div class="property-value">
+                            <input type="text" value="${b.name}" id="prop-name">
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🎨 لون الضوء</h3>
+                        ${presetsHTML}
+                        <div style="margin-top: 10px; display: ${b.lightPreset === 'custom' ? 'block' : 'none'};" id="custom-color-container">
+                            <input type="color" value="${b.lightColor}" id="prop-color" style="width: 100%">
+                        </div>
+                    </div>
+                    
+                    <div class="property-row">
+                        <div class="property-label">الموقع X</div>
+                        <div class="property-value">
+                            <input type="number" value="${Math.round(b.x)}" id="prop-x" min="0" max="${this.canvas.width}">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">الموقع Y</div>
+                        <div class="property-value">
+                            <input type="number" value="${Math.round(b.y)}" id="prop-y" min="0" max="${this.canvas.height}">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">الحجم</div>
+                        <div class="property-value">
+                            <input type="number" value="${b.scale.toFixed(1)}" id="prop-scale" min="0.5" max="2" step="0.1">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">التشغيل</div>
+                        <div class="property-value">
+                            <input type="checkbox" ${b.isOn ? 'checked' : ''} id="prop-on">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">قطر الوهج</div>
+                        <div class="property-value">
+                            <input type="number" value="${b.glowRadius}" id="prop-glow" min="50" max="1000" step="10">
+                            <span style="color:#888; font-size:11px">px</span>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">سرعة الانتشار</div>
+                        <div class="property-value">
+                            <input type="number" value="${b.propagationSpeed}" id="prop-speed" min="100" max="5000" step="100">
+                            <span style="color:#888; font-size:11px">px/s</span>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">قوة الخفوت</div>
+                        <div class="property-value">
+                            <input type="number" value="${b.fadeStrength}" id="prop-fade" min="0" max="5" step="0.1">
+                            <span style="color:#888; font-size:11px">0=لا خفوت</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🔧 خصائص التحكم</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتحريك</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${b.canMove ? 'checked' : ''} id="prop-can-move">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتدوير</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${b.canRotate ? 'checked' : ''} id="prop-can-rotate">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">يمكن حذفه</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${b.canDelete ? 'checked' : ''} id="prop-can-delete">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">مخفي</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${b.hidden ? 'checked' : ''} id="prop-hidden">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.attachBulbEventListeners(b);
+            }
+
+            attachBulbEventListeners(b) {
+                document.getElementById('prop-name').addEventListener('change', (e) => {
+                    b.name = e.target.value;
+                });
+
+                // Light preset selection
+                document.querySelectorAll('.preset-color').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        const preset = e.target.dataset.preset;
+                        b.setLightPreset(preset);
+                        this.updateProperties();
+                        this.render();
+                    });
+                });
+
+                if (b.lightPreset === 'custom') {
+                    document.getElementById('prop-color').addEventListener('input', (e) => {
+                        b.lightColor = e.target.value;
+                        b.updateLight();
+                        this.render();
+                    });
+                }
+
+                document.getElementById('prop-x').addEventListener('input', (e) => {
+                    let value = parseFloat(e.target.value);
+                    if (isNaN(value) || value < 0) value = 0;
+                    else if (value > this.canvas.width) value = this.canvas.width;
+                    e.target.value = value;
+                    b.x = value;
+                    b.updateLight();
+                    this.render();
+                });
+
+                document.getElementById('prop-y').addEventListener('input', (e) => {
+                    let value = parseFloat(e.target.value);
+                    if (isNaN(value) || value < 0) value = 0;
+                    else if (value > this.canvas.height) value = this.canvas.height;
+                    e.target.value = value;
+                    b.y = value;
+                    b.updateLight();
+                    this.render();
+                });
+
+                document.getElementById('prop-scale').addEventListener('input', (e) => {
+                    b.scale = Math.max(0.5, Math.min(2, parseFloat(e.target.value) || 1));
+                    this.render();
+                });
+
+                document.getElementById('prop-on').addEventListener('change', (e) => {
+                    b.isOn = e.target.checked;
+                    b.updateLight();
+                    this.render();
+                });
+
+                document.getElementById('prop-glow').addEventListener('input', (e) => {
+                    b.glowRadius = Math.max(50, Math.min(1000, parseInt(e.target.value) || 250));
+                    this.render();
+                });
+
+                document.getElementById('prop-speed').addEventListener('input', (e) => {
+                    b.propagationSpeed = Math.max(100, Math.min(5000, parseInt(e.target.value) || 1000));
+                });
+
+                document.getElementById('prop-fade').addEventListener('input', (e) => {
+                    b.fadeStrength = Math.max(0, Math.min(5, parseFloat(e.target.value) || 0));
+                    b.updateLight();
+                    this.render();
+                });
+
+                document.getElementById('prop-can-move').addEventListener('change', (e) => {
+                    b.canMove = e.target.checked;
+                });
+
+                document.getElementById('prop-can-rotate').addEventListener('change', (e) => {
+                    b.canRotate = e.target.checked;
+                });
+
+                document.getElementById('prop-can-delete').addEventListener('change', (e) => {
+                    b.canDelete = e.target.checked;
+                });
+
+                document.getElementById('prop-hidden').addEventListener('change', (e) => {
+                    b.hidden = e.target.checked;
+                    this.render();
+                });
+            }
+
+            updateWallProperties() {
+                const header = document.getElementById('properties-header');
+                const content = document.getElementById('properties-content');
+                const w = this.selectedObject;
+                
+                header.textContent = '🧱 خصائص الجدار';
+                
+                let openingsHTML = '';
+                if (w.openings.length > 0) {
+                    openingsHTML = '<div class="openings-list">';
+                    w.openings.forEach((opening, index) => {
+                        openingsHTML += `
+                            <div class="opening-item" style="display: block; padding: 8px;">
+                                <div style="margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="font-size: 12px;">فتحة ${index + 1}</strong>
+                                    <button onclick="game.removeOpening(${index})">حذف</button>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                                    <label style="flex: 1; font-size: 12px;">البداية:</label>
+                                    <input type="number" value="${Math.round(opening.startPixel)}" 
+                                           id="opening-${index}-start" min="0" max="${Math.round(w.getLength())}"
+                                           style="flex: 1; padding: 4px; background: #1a1a2e; border: 1px solid #555; color: white; border-radius: 3px; font-size: 12px;">
+                                    <span style="font-size: 11px; color: #888;">px</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                                    <label style="flex: 1; font-size: 12px;">العرض:</label>
+                                    <input type="number" value="${Math.round(opening.widthPixel)}" 
+                                           id="opening-${index}-width" min="10" max="${Math.round(w.getLength())}"
+                                           style="flex: 1; padding: 4px; background: #1a1a2e; border: 1px solid #555; color: white; border-radius: 3px; font-size: 12px;">
+                                    <span style="font-size: 11px; color: #888;">px</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    openingsHTML += '</div>';
+                }
+                
+                content.innerHTML = `
+                    <div class="property-row">
+                        <div class="property-label">الاسم</div>
+                        <div class="property-value">
+                            <input type="text" value="${w.name}" id="prop-name">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">السماكة</div>
+                        <div class="property-value">
+                            <input type="number" value="${w.thickness}" id="prop-thickness" min="2" max="100">
+                            <span style="color:#888; font-size:11px">px</span>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">اللون</div>
+                        <div class="property-value">
+                            <input type="color" value="${w.color}" id="prop-color">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">الطول</div>
+                        <div class="property-value">
+                            <span style="color:#888">${Math.round(w.getLength())} px</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🧱 التقسيمات (الطوب)</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">إظهار التقسيمات</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${w.showDivisions ? 'checked' : ''} id="prop-show-divisions">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">حجم التقسيم</div>
+                            <div class="property-value">
+                                <input type="number" value="${w.divisionSize}" id="prop-division-size" min="10" max="200">
+                                <span style="color:#888; font-size:11px">px</span>
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">لون التقسيم</div>
+                            <div class="property-value">
+                                <input type="color" value="${w.divisionColor}" id="prop-division-color">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">سمك خط التقسيم</div>
+                            <div class="property-value">
+                                <input type="number" value="${w.divisionThickness}" id="prop-division-thickness" min="1" max="10">
+                                <span style="color:#888; font-size:11px">px</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🚪 الفتحات</h3>
+                        ${openingsHTML}
+                        <button class="btn-add-opening" onclick="game.addOpening()">+ إضافة فتحة</button>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🔧 خصائص التحكم</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتحريك</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${w.canMove ? 'checked' : ''} id="prop-can-move">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتدوير</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${w.canRotate ? 'checked' : ''} id="prop-can-rotate">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">يمكن حذفه</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${w.canDelete ? 'checked' : ''} id="prop-can-delete">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">مخفي</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${w.hidden ? 'checked' : ''} id="prop-hidden">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('prop-name').addEventListener('change', (e) => {
+                    w.name = e.target.value;
+                });
+
+                document.getElementById('prop-thickness').addEventListener('input', (e) => {
+                    w.thickness = Math.max(2, Math.min(100, parseInt(e.target.value) || 8));
+                    this.render();
+                });
+
+                document.getElementById('prop-color').addEventListener('input', (e) => {
+                    w.color = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('prop-show-divisions').addEventListener('change', (e) => {
+                    w.showDivisions = e.target.checked;
+                    this.render();
+                });
+
+                document.getElementById('prop-division-size').addEventListener('input', (e) => {
+                    w.divisionSize = Math.max(10, Math.min(200, parseInt(e.target.value) || 50));
+                    this.render();
+                });
+
+                document.getElementById('prop-division-color').addEventListener('input', (e) => {
+                    w.divisionColor = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('prop-division-thickness').addEventListener('input', (e) => {
+                    w.divisionThickness = Math.max(1, Math.min(10, parseInt(e.target.value) || 2));
+                    this.render();
+                });
+
+                document.getElementById('prop-can-move').addEventListener('change', (e) => {
+                    w.canMove = e.target.checked;
+                });
+
+                document.getElementById('prop-can-rotate').addEventListener('change', (e) => {
+                    w.canRotate = e.target.checked;
+                });
+
+                document.getElementById('prop-can-delete').addEventListener('change', (e) => {
+                    w.canDelete = e.target.checked;
+                });
+
+                document.getElementById('prop-hidden').addEventListener('change', (e) => {
+                    w.hidden = e.target.checked;
+                    this.render();
+                });
+
+                // Add event listeners for opening inputs
+                w.openings.forEach((opening, index) => {
+                    const startInput = document.getElementById(`opening-${index}-start`);
+                    const widthInput = document.getElementById(`opening-${index}-width`);
+                    
+                    if (startInput) {
+                        startInput.addEventListener('input', (e) => {
+                            const value = Math.max(0, Math.min(w.getLength(), parseFloat(e.target.value) || 0));
+                            w.updateOpening(index, value, opening.widthPixel);
+                            this.render();
+                        });
+                    }
+                    
+                    if (widthInput) {
+                        widthInput.addEventListener('input', (e) => {
+                            const value = Math.max(10, Math.min(w.getLength(), parseFloat(e.target.value) || 10));
+                            w.updateOpening(index, opening.startPixel, value);
+                            this.render();
+                        });
+                    }
+                });
+            }
+
+            addOpening() {
+                if (this.selectedObject && this.selectedObject.type === 'wall') {
+                    // Add opening at 100px from start with 50px width
+                    this.selectedObject.addOpening(100, 50);
+                    this.updateProperties();
+                    this.render();
+                }
+            }
+
+            updateMirrorProperties() {
+                const header = document.getElementById('properties-header');
+                const content = document.getElementById('properties-content');
+                const m = this.selectedObject;
+                
+                header.textContent = '🪞 خصائص المرآة';
+                
+                content.innerHTML = `
+                    <div class="property-row">
+                        <div class="property-label">الاسم</div>
+                        <div class="property-value">
+                            <input type="text" value="${m.name}" id="prop-name">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">السماكة</div>
+                        <div class="property-value">
+                            <input type="number" value="${m.thickness}" id="prop-thickness" min="2" max="20">
+                            <span style="color:#888; font-size:11px">px</span>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">اللون</div>
+                        <div class="property-value">
+                            <input type="color" value="${m.color}" id="prop-color">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">لون العاكس</div>
+                        <div class="property-value">
+                            <input type="color" value="${m.reflectiveColor}" id="prop-reflective-color">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">الطول</div>
+                        <div class="property-value">
+                            <span style="color:#888">${Math.round(m.getLength())} px</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🔮 نوع الانعكاس</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">النوع</div>
+                            <div class="property-value">
+                                <select id="prop-mirror-type" style="width: 100%;">
+                                    <option value="preserve" ${m.mirrorType === 'preserve' ? 'selected' : ''}>محافظة على الانتشار</option>
+                                    <option value="parallel" ${m.mirrorType === 'parallel' ? 'selected' : ''}>حزمة متوازية</option>
+                                    <option value="concave" ${m.mirrorType === 'concave' ? 'selected' : ''}>مقعرة/محدبة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0; display: ${m.mirrorType === 'concave' ? 'flex' : 'none'};" id="curvature-container">
+                            <div class="property-label">مستوى التقعر</div>
+                            <div class="property-value">
+                                <input type="number" value="${m.curvatureLevel}" id="prop-curvature" min="-100" max="100" step="5">
+                                <span style="color:#888; font-size:11px">+مقعر/-محدب</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🔧 خصائص التحكم</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتحريك</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canMove ? 'checked' : ''} id="prop-can-move">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتدوير</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canRotate ? 'checked' : ''} id="prop-can-rotate">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">يمكن حذفه</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canDelete ? 'checked' : ''} id="prop-can-delete">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">مخفي</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.hidden ? 'checked' : ''} id="prop-hidden">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('prop-name').addEventListener('change', (e) => {
+                    m.name = e.target.value;
+                });
+
+                document.getElementById('prop-thickness').addEventListener('input', (e) => {
+                    m.thickness = Math.max(2, Math.min(20, parseInt(e.target.value) || 6));
+                    this.render();
+                });
+
+                document.getElementById('prop-color').addEventListener('input', (e) => {
+                    m.color = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('prop-reflective-color').addEventListener('input', (e) => {
+                    m.reflectiveColor = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('prop-mirror-type').addEventListener('change', (e) => {
+                    m.mirrorType = e.target.value;
+                    const curvatureContainer = document.getElementById('curvature-container');
+                    if (m.mirrorType === 'concave') {
+                        curvatureContainer.style.display = 'flex';
+                    } else {
+                        curvatureContainer.style.display = 'none';
+                    }
+                    this.render();
+                });
+
+                if (m.mirrorType === 'concave') {
+                    document.getElementById('prop-curvature').addEventListener('input', (e) => {
+                        m.curvatureLevel = Math.max(-100, Math.min(100, parseInt(e.target.value) || 0));
+                        this.render();
+                    });
+                }
+
+                document.getElementById('prop-can-move').addEventListener('change', (e) => {
+                    m.canMove = e.target.checked;
+                });
+
+                document.getElementById('prop-can-rotate').addEventListener('change', (e) => {
+                    m.canRotate = e.target.checked;
+                });
+
+                document.getElementById('prop-can-delete').addEventListener('change', (e) => {
+                    m.canDelete = e.target.checked;
+                });
+
+                document.getElementById('prop-hidden').addEventListener('change', (e) => {
+                    m.hidden = e.target.checked;
+                    this.render();
+                });
+            }
+
+            updateMirrorProperties() {
+                const header = document.getElementById('properties-header');
+                const content = document.getElementById('properties-content');
+                const m = this.selectedObject;
+                
+                header.textContent = '🪞 خصائص المرآة';
+                
+                content.innerHTML = `
+                    <div class="property-row">
+                        <div class="property-label">الاسم</div>
+                        <div class="property-value">
+                            <input type="text" value="${m.name}" id="prop-name">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">السماكة</div>
+                        <div class="property-value">
+                            <input type="number" value="${m.thickness}" id="prop-thickness" min="2" max="20">
+                            <span style="color:#888; font-size:11px">px</span>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">اللون</div>
+                        <div class="property-value">
+                            <input type="color" value="${m.color}" id="prop-color">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">الطول</div>
+                        <div class="property-value">
+                            <span style="color:#888">${Math.round(m.getLength())} px</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>✨ خصائص الانعكاس</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">نوع الانعكاس</div>
+                            <div class="property-value">
+                                <select id="prop-reflection-type">
+                                    <option value="maintain" ${m.reflectionType === 'maintain' ? 'selected' : ''}>الحفاظ على الانتشار</option>
+                                    <option value="parallel" ${m.reflectionType === 'parallel' ? 'selected' : ''}>شعاع متوازي</option>
+                                    <option value="curved" ${m.reflectionType === 'curved' ? 'selected' : ''}>مرآة منحنية</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0; display: ${m.reflectionType === 'curved' ? 'flex' : 'none'};" id="curvature-row">
+                            <div class="property-label">التقعر/التحدب</div>
+                            <div class="property-value">
+                                <input type="number" value="${m.curvature}" id="prop-curvature" min="-5" max="5" step="0.1">
+                                <span style="color:#888; font-size:11px">+مقعرة / -محدبة</span>
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قوة الانعكاس</div>
+                            <div class="property-value">
+                                <input type="number" value="${m.reflectivity}" id="prop-reflectivity" min="0" max="1" step="0.1">
+                                <span style="color:#888; font-size:11px">0-1</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <h3>🔧 خصائص التحكم</h3>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتحريك</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canMove ? 'checked' : ''} id="prop-can-move">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">قابل للتدوير</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canRotate ? 'checked' : ''} id="prop-can-rotate">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">يمكن حذفه</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.canDelete ? 'checked' : ''} id="prop-can-delete">
+                            </div>
+                        </div>
+                        <div class="property-row" style="border: none; padding: 8px 0;">
+                            <div class="property-label">مخفي</div>
+                            <div class="property-value">
+                                <input type="checkbox" ${m.hidden ? 'checked' : ''} id="prop-hidden">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('prop-name').addEventListener('change', (e) => {
+                    m.name = e.target.value;
+                });
+
+                document.getElementById('prop-thickness').addEventListener('input', (e) => {
+                    m.thickness = Math.max(2, Math.min(20, parseInt(e.target.value) || 6));
+                    this.render();
+                });
+
+                document.getElementById('prop-color').addEventListener('input', (e) => {
+                    m.color = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('prop-reflection-type').addEventListener('change', (e) => {
+                    m.reflectionType = e.target.value;
+                    const curvatureRow = document.getElementById('curvature-row');
+                    if (m.reflectionType === 'curved') {
+                        curvatureRow.style.display = 'flex';
+                    } else {
+                        curvatureRow.style.display = 'none';
+                    }
+                    this.render();
+                });
+
+                const curvatureInput = document.getElementById('prop-curvature');
+                if (curvatureInput) {
+                    curvatureInput.addEventListener('input', (e) => {
+                        m.curvature = Math.max(-5, Math.min(5, parseFloat(e.target.value) || 0));
+                        this.render();
+                    });
+                }
+
+                document.getElementById('prop-reflectivity').addEventListener('input', (e) => {
+                    m.reflectivity = Math.max(0, Math.min(1, parseFloat(e.target.value) || 0.8));
+                    this.render();
+                });
+
+                document.getElementById('prop-can-move').addEventListener('change', (e) => {
+                    m.canMove = e.target.checked;
+                });
+
+                document.getElementById('prop-can-rotate').addEventListener('change', (e) => {
+                    m.canRotate = e.target.checked;
+                });
+
+                document.getElementById('prop-can-delete').addEventListener('change', (e) => {
+                    m.canDelete = e.target.checked;
+                });
+
+                document.getElementById('prop-hidden').addEventListener('change', (e) => {
+                    m.hidden = e.target.checked;
+                    this.render();
+                });
+            }
+
+            removeOpening(index) {
+                if (this.selectedObject && this.selectedObject.type === 'wall') {
+                    this.selectedObject.removeOpening(index);
+                    this.updateProperties();
+                    this.render();
+                }
+            }
+
+            render() {
+                this.ctx.fillStyle = '#0a0a0a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const walls = this.objects.filter(obj => obj.type === 'wall');
+                const mirrors = this.objects.filter(obj => obj.type === 'mirror');
+                const bulbs = this.objects.filter(obj => obj.type === 'bulb');
+                const allBlockers = [...walls, ...mirrors]; // Mirrors also block light
+
+                // Draw each light with its own shadows separately
+                bulbs.forEach(bulb => {
+                    if (bulb.light && bulb.light.currentRadius > 0) {
+                        // Create a temporary canvas for this light
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = this.canvas.width;
+                        tempCanvas.height = this.canvas.height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        // Draw light on temp canvas
+                        tempCtx.globalCompositeOperation = 'source-over';
+                        bulb.light.drawLightOnly(tempCtx);
+                        
+                        // Cut out shadows using destination-out
+                        tempCtx.globalCompositeOperation = 'destination-out';
+                        bulb.light.drawShadowsOnly(tempCtx, allBlockers, this.canvas.width, this.canvas.height);
+                        
+                        // Draw result to main canvas with lighter blend
+                        this.ctx.globalCompositeOperation = 'lighter';
+                        this.ctx.drawImage(tempCanvas, 0, 0);
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        
+                        // Calculate and draw reflections from mirrors
+                        mirrors.forEach(mirror => {
+                            if (mirror.hidden) return;
+                            
+                            // Check if light reaches the mirror
+                            const mirrorMidX = (mirror.x1 + mirror.x2) / 2;
+                            const mirrorMidY = (mirror.y1 + mirror.y2) / 2;
+                            const distToMirror = Math.sqrt(
+                                Math.pow(bulb.x - mirrorMidX, 2) + 
+                                Math.pow(bulb.y - mirrorMidY, 2)
+                            );
+                            
+                            if (distToMirror > bulb.light.currentRadius) return;
+                            
+                            // Calculate incoming angle
+                            const incomingAngle = Math.atan2(mirrorMidY - bulb.y, mirrorMidX - bulb.x);
+                            
+                            // Calculate spread angle (full 360 becomes a cone)
+                            const spreadAngle = Math.PI; // 180 degrees for 360 light
+                            
+                            // Get reflection parameters (pass light position)
+                            const reflection = mirror.reflect(incomingAngle, spreadAngle, bulb.x, bulb.y);
+                            
+                            // Check if reflection is valid (light hit the front side)
+                            if (!reflection) return;
+                            
+                            // Create reflected light beam
+                            const reflectedBeam = new LightBeam(
+                                mirrorMidX,
+                                mirrorMidY,
+                                reflection.angle,
+                                reflection.spread,
+                                bulb.lightColor,
+                                0.6, // Reduced intensity
+                                bulb.light.currentRadius * 0.8 // Reduced distance
+                            );
+                            
+                            // Draw reflected beam
+                            reflectedBeam.draw(this.ctx, walls, mirrors);
+                        });
+                    }
+                });
+
+                // In preview mode, show selection but hide non-interactive handles
+                const showFullSelection = !this.isPreviewMode;
+                
+                walls.forEach(wall => wall.draw(this.ctx, showFullSelection));
+                mirrors.forEach(mirror => mirror.draw(this.ctx, showFullSelection));
+                bulbs.forEach(bulb => bulb.draw(this.ctx, showFullSelection));
+
+                if (this.isDrawingWall) {
+                    // Check if drawing mirror or wall
+                    if (this.currentTool === 'mirror') {
+                        this.ctx.strokeStyle = '#C0C0C0';
+                        this.ctx.lineWidth = 6;
+                    } else {
+                        this.ctx.strokeStyle = '#8B4513';
+                        this.ctx.lineWidth = 8;
+                    }
+                    this.ctx.lineCap = 'round';
+                    this.ctx.setLineDash([10, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.wallStartX, this.wallStartY);
+                    this.ctx.lineTo(this.tempWallEndX, this.tempWallEndY);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+            }
+
+            canInteractWith(obj) {
+                if (!this.isPreviewMode) return true;
+                return obj.canMove || obj.canRotate;
+            }
+
+            setupEvents() {
+                document.getElementById('btn-preview').addEventListener('click', () => {
+                    this.setPreviewMode(true);
+                });
+
+                document.getElementById('btn-edit').addEventListener('click', () => {
+                    this.setPreviewMode(false);
+                });
+
+                document.getElementById('btn-select').addEventListener('click', () => {
+                    this.currentTool = 'select';
+                    document.getElementById('btn-select').classList.add('active');
+                    document.getElementById('btn-add-bulb').classList.remove('active');
+                    document.getElementById('btn-add-wall').classList.remove('active');
+                    document.getElementById('btn-add-mirror').classList.remove('active');
+                });
+
+                document.getElementById('btn-add-bulb').addEventListener('click', () => {
+                    this.currentTool = 'bulb';
+                    document.getElementById('btn-select').classList.remove('active');
+                    document.getElementById('btn-add-bulb').classList.add('active');
+                    document.getElementById('btn-add-wall').classList.remove('active');
+                    document.getElementById('btn-add-mirror').classList.remove('active');
+                });
+
+                document.getElementById('btn-add-wall').addEventListener('click', () => {
+                    this.currentTool = 'wall';
+                    document.getElementById('btn-select').classList.remove('active');
+                    document.getElementById('btn-add-wall').classList.add('active');
+                    document.getElementById('btn-add-bulb').classList.remove('active');
+                    document.getElementById('btn-add-mirror').classList.remove('active');
+                });
+
+                document.getElementById('btn-add-mirror').addEventListener('click', () => {
+                    this.currentTool = 'mirror';
+                    document.getElementById('btn-select').classList.remove('active');
+                    document.getElementById('btn-add-wall').classList.remove('active');
+                    document.getElementById('btn-add-bulb').classList.remove('active');
+                    document.getElementById('btn-add-mirror').classList.add('active');
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    // PREVIEW MODE - respect canMove and canRotate
+                    if (this.isPreviewMode) {
+                        // FIRST: Check if clicking on handles of already selected object
+                        if (this.selectedObject) {
+                            const handle = this.selectedObject.isPointInHandle(x, y);
+                            
+                            console.log('Checking selected object:', this.selectedObject.type, 'handle:', handle);
+                            
+                            if (handle === 'rotate' && this.selectedObject.canRotate) {
+                                this.isRotating = true;
+                                
+                                if (this.selectedObject.type === 'wall') {
+                                    const midX = (this.selectedObject.x1 + this.selectedObject.x2) / 2;
+                                    const midY = (this.selectedObject.y1 + this.selectedObject.y2) / 2;
+                                    
+                                    // Store the MOUSE position angle as starting point
+                                    this.rotationStartAngle = Math.atan2(y - midY, x - midX);
+                                    
+                                    // Store current wall angle
+                                    const angle = Math.atan2(this.selectedObject.y2 - this.selectedObject.y1, this.selectedObject.x2 - this.selectedObject.x1);
+                                    this.objectStartRotation = angle;
+                                    
+                                    console.log('=== ROTATION START (PREVIEW) ===');
+                                    console.log('Wall coords:', 
+                                        'x1:', this.selectedObject.x1.toFixed(1), 
+                                        'y1:', this.selectedObject.y1.toFixed(1),
+                                        'x2:', this.selectedObject.x2.toFixed(1),
+                                        'y2:', this.selectedObject.y2.toFixed(1));
+                                    console.log('Mouse position:', x.toFixed(1), y.toFixed(1));
+                                    console.log('Wall center:', midX.toFixed(1), midY.toFixed(1));
+                                    console.log('rotationStartAngle (mouse, deg):', (this.rotationStartAngle * 180 / Math.PI).toFixed(1));
+                                    console.log('objectStartRotation (wall, deg):', (this.objectStartRotation * 180 / Math.PI).toFixed(1));
+                                } else if (this.selectedObject.type === 'bulb') {
+                                    this.rotationStartAngle = Math.atan2(y - this.selectedObject.y, x - this.selectedObject.x);
+                                    this.objectStartRotation = this.selectedObject.rotation;
+                                }
+                                
+                                e.preventDefault();
+                                e.stopPropagation();
+                                this.render();
+                                return;
+                            }
+                            
+                            if (this.selectedObject.type === 'wall' && (handle === 'start' || handle === 'end') && this.selectedObject.canMove) {
+                                this.isResizing = true;
+                                this.resizeHandle = handle;
+                                return;
+                            }
+                        }
+                        
+                        // SECOND: Check if clicking on an object
+                        const obj = this.getObjectAt(x, y);
+                        if (obj) {
+                            // Deselect previous object
+                            if (this.selectedObject && this.selectedObject !== obj) {
+                                this.selectedObject.selected = false;
+                            }
+                            
+                            // Select new object
+                            this.selectedObject = obj;
+                            obj.selected = true;
+                            
+                            // Start dragging if object can move
+                            if (obj.canMove) {
+                                this.isDragging = true;
+                                this.dragStartX = x;
+                                this.dragStartY = y;
+                            }
+                            
+                            this.render(); // Re-render to show selection
+                        } else {
+                            // Clicked on empty space - deselect
+                            if (this.selectedObject) {
+                                this.selectedObject.selected = false;
+                                this.selectedObject = null;
+                                this.render();
+                            }
+                        }
+                        return;
+                    }
+
+                    // EDIT MODE - full control
+                    if (this.currentTool === 'wall' && !this.selectedObject) {
+                        this.isDrawingWall = true;
+                        this.wallStartX = x;
+                        this.wallStartY = y;
+                        this.tempWallEndX = x;
+                        this.tempWallEndY = y;
+                        return;
+                    }
+
+                    if (this.currentTool === 'mirror' && !this.selectedObject) {
+                        this.isDrawingWall = true; // Reuse wall drawing logic
+                        this.wallStartX = x;
+                        this.wallStartY = y;
+                        this.tempWallEndX = x;
+                        this.tempWallEndY = y;
+                        return;
+                    }
+
+                    if (this.selectedObject && this.selectedObject.type === 'mirror') {
+                        const handle = this.selectedObject.isPointInHandle(x, y);
+                        if (handle === 'rotate') {
+                            this.isRotating = true;
+                            const midX = (this.selectedObject.x1 + this.selectedObject.x2) / 2;
+                            const midY = (this.selectedObject.y1 + this.selectedObject.y2) / 2;
+                            this.rotationStartAngle = Math.atan2(y - midY, x - midX);
+                            const angle = Math.atan2(this.selectedObject.y2 - this.selectedObject.y1, this.selectedObject.x2 - this.selectedObject.x1);
+                            this.objectStartRotation = angle;
+                            return;
+                        } else if (handle === 'start' || handle === 'end') {
+                            this.isResizing = true;
+                            this.resizeHandle = handle;
+                            return;
+                        }
+                    }
+
+                    if (this.selectedObject && this.selectedObject.type === 'wall') {
+                        const handle = this.selectedObject.isPointInHandle(x, y);
+                        if (handle === 'rotate') {
+                            this.isRotating = true;
+                            const midX = (this.selectedObject.x1 + this.selectedObject.x2) / 2;
+                            const midY = (this.selectedObject.y1 + this.selectedObject.y2) / 2;
+                            
+                            // Use MOUSE position as starting angle
+                            this.rotationStartAngle = Math.atan2(y - midY, x - midX);
+                            
+                            // Store current wall angle
+                            const angle = Math.atan2(this.selectedObject.y2 - this.selectedObject.y1, this.selectedObject.x2 - this.selectedObject.x1);
+                            this.objectStartRotation = angle;
+                            
+                            console.log('=== ROTATION START (EDIT) ===');
+                            console.log('Wall coords:', 
+                                'x1:', this.selectedObject.x1.toFixed(1), 
+                                'y1:', this.selectedObject.y1.toFixed(1),
+                                'x2:', this.selectedObject.x2.toFixed(1),
+                                'y2:', this.selectedObject.y2.toFixed(1));
+                            console.log('rotationStartAngle (mouse, deg):', (this.rotationStartAngle * 180 / Math.PI).toFixed(1));
+                            console.log('objectStartRotation (wall, deg):', (this.objectStartRotation * 180 / Math.PI).toFixed(1));
+                            
+                            return;
+                        } else if (handle === 'start' || handle === 'end') {
+                            this.isResizing = true;
+                            this.resizeHandle = handle;
+                            return;
+                        }
+                    }
+
+                    if (this.selectedObject && this.selectedObject.type === 'bulb') {
+                        const handle = this.selectedObject.isPointInHandle(x, y);
+                        if (handle === 'rotate') {
+                            this.isRotating = true;
+                            // Store initial angle and object rotation
+                            this.rotationStartAngle = Math.atan2(y - this.selectedObject.y, x - this.selectedObject.x);
+                            this.objectStartRotation = this.selectedObject.rotation;
+                            return;
+                        }
+                    }
+
+                    const obj = this.getObjectAt(x, y);
+                    
+                    if (obj) {
+                        this.selectObject(obj);
+                        
+                        if (obj.type === 'wall') {
+                            const handle = obj.isPointInHandle(x, y);
+                            if (handle === 'rotate') {
+                                this.isRotating = true;
+                                const midX = (obj.x1 + obj.x2) / 2;
+                                const midY = (obj.y1 + obj.y2) / 2;
+                                
+                                // Use MOUSE position as starting angle
+                                this.rotationStartAngle = Math.atan2(y - midY, x - midX);
+                                
+                                // Store current wall angle
+                                const angle = Math.atan2(obj.y2 - obj.y1, obj.x2 - obj.x1);
+                                this.objectStartRotation = angle;
+                                
+                                console.log('=== ROTATION START (EDIT - New Object) ===');
+                                console.log('rotationStartAngle (mouse, deg):', (this.rotationStartAngle * 180 / Math.PI).toFixed(1));
+                                console.log('objectStartRotation (wall, deg):', (this.objectStartRotation * 180 / Math.PI).toFixed(1));
+                                
+                                return;
+                            } else if (handle === 'start' || handle === 'end') {
+                                this.isResizing = true;
+                                this.resizeHandle = handle;
+                                return;
+                            }
+                        }
+                        
+                        if (obj.type === 'bulb') {
+                            const handle = obj.isPointInHandle(x, y);
+                            if (handle === 'rotate') {
+                                this.isRotating = true;
+                                this.rotationStartAngle = Math.atan2(y - obj.y, x - obj.x);
+                                this.objectStartRotation = obj.rotation;
+                                return;
+                            }
+                        }
+                        
+                        // In edit mode, always allow dragging
+                        this.isDragging = true;
+                        this.dragStartX = x;
+                        this.dragStartY = y;
+                        this.canvas.style.cursor = 'grabbing';
+                    } else {
+                        if (this.currentTool === 'bulb') {
+                            this.addBulb(x, y);
+                        } else if (this.currentTool === 'wall') {
+                            this.isDrawingWall = true;
+                            this.wallStartX = x;
+                            this.wallStartY = y;
+                            this.tempWallEndX = x;
+                            this.tempWallEndY = y;
+                        } else {
+                            this.selectObject(null);
+                        }
+                    }
+                });
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    if (this.isDrawingWall && !this.isPreviewMode) {
+                        this.tempWallEndX = x;
+                        this.tempWallEndY = y;
+                        this.render();
+                        return;
+                    }
+
+                    if (this.isRotating && this.selectedObject) {
+                        if (this.selectedObject.type === 'wall') {
+                            const midX = (this.selectedObject.x1 + this.selectedObject.x2) / 2;
+                            const midY = (this.selectedObject.y1 + this.selectedObject.y2) / 2;
+                            const currentAngle = Math.atan2(y - midY, x - midX);
+                            const deltaAngle = currentAngle - this.rotationStartAngle;
+                            
+                            // Ignore very small movements at the start (less than 3 degrees)
+                            if (Math.abs(deltaAngle) < 0.05 && !this.hasStartedRotating) {
+                                return; // Too small, don't rotate yet
+                            }
+                            this.hasStartedRotating = true;
+                            
+                            const newAngle = this.objectStartRotation + deltaAngle;
+                            
+                            console.log('ROTATING - current:', (currentAngle * 180 / Math.PI).toFixed(1), 
+                                       'start:', (this.rotationStartAngle * 180 / Math.PI).toFixed(1),
+                                       'delta:', (deltaAngle * 180 / Math.PI).toFixed(1), 
+                                       'new:', (newAngle * 180 / Math.PI).toFixed(1));
+                            
+                            const length = this.selectedObject.getLength();
+                            this.selectedObject.x1 = midX - Math.cos(newAngle) * length / 2;
+                            this.selectedObject.y1 = midY - Math.sin(newAngle) * length / 2;
+                            this.selectedObject.x2 = midX + Math.cos(newAngle) * length / 2;
+                            this.selectedObject.y2 = midY + Math.sin(newAngle) * length / 2;
+                        } else if (this.selectedObject.type === 'bulb') {
+                            const currentAngle = Math.atan2(y - this.selectedObject.y, x - this.selectedObject.x);
+                            const deltaAngle = currentAngle - this.rotationStartAngle;
+                            this.selectedObject.rotation = this.objectStartRotation + deltaAngle;
+                        }
+                        
+                        if (!this.isPreviewMode) {
+                            this.updateProperties();
+                        }
+                        this.render();
+                        return;
+                    }
+
+                    if (this.isResizing && this.selectedObject && this.selectedObject.type === 'wall') {
+                        this.selectedObject.resizeEndpoint(this.resizeHandle, x, y);
+                        this.updateProperties();
+                        this.render();
+                        return;
+                    }
+
+                    if (this.isDragging && this.selectedObject) {
+                        this.canvas.className = 'cursor-grabbing';
+                        
+                        const dx = x - this.dragStartX;
+                        const dy = y - this.dragStartY;
+                        
+                        if (this.selectedObject.type === 'bulb') {
+                            this.selectedObject.x = Math.max(50, Math.min(this.canvas.width - 50, this.selectedObject.x + dx));
+                            this.selectedObject.y = Math.max(50, Math.min(this.canvas.height - 50, this.selectedObject.y + dy));
+                            this.selectedObject.updateLight();
+                        } else if (this.selectedObject.type === 'wall') {
+                            this.selectedObject.x1 += dx;
+                            this.selectedObject.y1 += dy;
+                            this.selectedObject.x2 += dx;
+                            this.selectedObject.y2 += dy;
+                        }
+                        
+                        this.dragStartX = x;
+                        this.dragStartY = y;
+                        
+                        if (!this.isPreviewMode) {
+                            this.updateProperties();
+                        }
+                        this.render();
+                    } else {
+                        // Update cursor based on what we're hovering over
+                        let cursorSet = false;
+                        
+                        if (this.selectedObject) {
+                            // Check rotation handle first (for both bulb and wall)
+                            if (this.selectedObject.type === 'wall') {
+                                const handle = this.selectedObject.isPointInHandle(x, y);
+                                if (handle === 'rotate') {
+                                    this.canvas.className = 'cursor-rotate';
+                                    cursorSet = true;
+                                } else if (handle === 'start' || handle === 'end') {
+                                    this.canvas.className = 'cursor-grab';
+                                    cursorSet = true;
+                                }
+                            } else if (this.selectedObject.type === 'bulb') {
+                                const handle = this.selectedObject.isPointInHandle(x, y);
+                                if (handle === 'rotate') {
+                                    this.canvas.className = 'cursor-rotate';
+                                    cursorSet = true;
+                                }
+                            }
+                        }
+                        
+                        if (!cursorSet) {
+                            // Check if hovering over any object
+                            const obj = this.getObjectAt(x, y);
+                            if (obj) {
+                                // In preview mode, check if object can move/rotate
+                                if (this.isPreviewMode) {
+                                    if (obj.canMove || obj.canRotate) {
+                                        this.canvas.className = 'cursor-grab';
+                                    } else {
+                                        this.canvas.style.cursor = 'default';
+                                        this.canvas.className = '';
+                                    }
+                                } else {
+                                    // In edit mode, always show grab
+                                    this.canvas.className = 'cursor-grab';
+                                }
+                            } else {
+                                // Not hovering over anything
+                                if (this.isPreviewMode) {
+                                    this.canvas.className = 'preview-mode';
+                                } else {
+                                    this.canvas.style.cursor = 'crosshair';
+                                    this.canvas.className = '';
+                                }
+                            }
+                        }
+                    }
+                });
+
+                this.canvas.addEventListener('mouseup', (e) => {
+                    if (this.isDrawingWall) {
+                        const rect = this.canvas.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        const length = Math.sqrt(
+                            Math.pow(x - this.wallStartX, 2) + 
+                            Math.pow(y - this.wallStartY, 2)
+                        );
+                        
+                        if (length > 10) {
+                            if (this.currentTool === 'mirror') {
+                                this.addMirror(this.wallStartX, this.wallStartY, x, y);
+                            } else {
+                                this.addWall(this.wallStartX, this.wallStartY, x, y);
+                            }
+                        }
+                        
+                        this.isDrawingWall = false;
+                        this.render();
+                    }
+                    
+                    this.isDragging = false;
+                    this.isRotating = false;
+                    this.hasStartedRotating = false; // Reset rotation threshold flag
+                    this.isResizing = false;
+                    this.resizeHandle = null;
+                    this.canvas.style.cursor = 'crosshair';
+                });
+
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.isDragging = false;
+                    this.isRotating = false;
+                    this.hasStartedRotating = false; // Reset rotation threshold flag
+                    this.isResizing = false;
+                    this.isDrawingWall = false;
+                    this.resizeHandle = null;
+                    this.canvas.style.cursor = 'crosshair';
+                });
+
+                this.canvas.addEventListener('dblclick', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const obj = this.getObjectAt(x, y);
+                    
+                    if (obj && obj.type === 'bulb') {
+                        obj.toggle();
+                        if (!this.isPreviewMode) {
+                            this.updateProperties();
+                        }
+                        this.render();
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (this.isPreviewMode) return;
+                    
+                    if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedObject) {
+                        if (!this.selectedObject.canDelete) {
+                            alert('هذا العنصر غير قابل للحذف');
+                            return;
+                        }
+                        
+                        const index = this.objects.indexOf(this.selectedObject);
+                        if (index > -1) {
+                            this.objects.splice(index, 1);
+                            this.selectedObject = null;
+                            
+                            this.objects.forEach(obj => {
+                                if (obj.type === 'bulb' && obj.isOn) {
+                                    obj.updateLight();
+                                }
+                            });
+                            
+                            this.updateProperties();
+                            this.render();
+                        }
+                        e.preventDefault();
+                    }
+                });
+            }
+        }
+
+        // ============================================
+        // START
+        // ============================================
+        
+        // Console messages at startup
+        console.log('🎮 Photon Engine Started');
+        console.log('📊 Console is now open and ready');
+        console.log('---');
+        
+        const canvas = document.getElementById('game-canvas');
+        const game = new Game(canvas);
+        game.render();
+    </script>
+</body>
+</html>
